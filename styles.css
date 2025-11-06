@@ -546,3 +546,66 @@ canvas {
 #muteButton.muted {
     background-color: #ffc107; /* Amarelo */
 }
+/* ===================== MODO MATRIX ===================== */
+
+/* Ativa o modo Matrix no body */
+body.matrix-mode {
+    background-color: #000 !important;
+    color: #00ff99 !important;
+    text-shadow: 0 0 8px #00ff99;
+    transition: background-color 1s ease, color 1s ease;
+}
+
+/* Canvas com efeito neon verde */
+body.matrix-mode canvas {
+    border-color: #00ff99;
+    box-shadow: 0 0 20px #00ff99aa;
+    transition: box-shadow 0.5s ease;
+}
+
+/* Painel com tom mais escuro e linhas verdes */
+body.matrix-mode .game-container {
+    background-color: rgba(0, 10, 0, 0.9);
+    box-shadow: 0 0 25px #00ff9966;
+    border: 1px solid #00ff9966;
+}
+
+/* Textos e títulos ganham brilho */
+body.matrix-mode h1,
+body.matrix-mode h2,
+body.matrix-mode h3,
+body.matrix-mode #score,
+body.matrix-mode #timer {
+    color: #00ff99;
+    text-shadow: 0 0 10px #00ff99, 0 0 20px #00ff55;
+    animation: matrixGlow 2s infinite alternate;
+}
+
+/* Efeito de piscada suave */
+@keyframes matrixGlow {
+    from { opacity: 1; text-shadow: 0 0 6px #00ff99; }
+    to { opacity: 0.8; text-shadow: 0 0 20px #00ff99; }
+}
+
+/* Fundo pulsante sutil */
+@keyframes matrixPulse {
+    0% { background-color: #000; }
+    50% { background-color: #001a00; }
+    100% { background-color: #000; }
+}
+
+body.matrix-mode {
+    animation: matrixPulse 6s infinite ease-in-out;
+}
+
+/* Botões no modo Matrix */
+body.matrix-mode button {
+    background-color: #00ff99 !important;
+    color: #000 !important;
+    border: none;
+    text-shadow: none;
+}
+
+body.matrix-mode button:hover {
+    background-color: #00cc77 !important;
+}
