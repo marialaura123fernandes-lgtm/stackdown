@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
 
 :root {
@@ -15,18 +14,22 @@ body {
     color: var(--text-color);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: center; /* Centraliza verticalmente */
     align-items: center;
-    min-height: 100vh;
+    height: 100vh; /* <<< USA 100% DA ALTURA DA TELA */
     margin: 0;
     text-align: center;
-    overflow: hidden; /* Impede scroll */
+    overflow: hidden; /* Mantém sem rolagem */
+    padding: 0;
+    box-sizing: border-box; 
 }
 
 h1 {
     color: var(--accent-color);
     text-transform: uppercase;
     letter-spacing: 2px;
+    margin: 1vh 0; /* Margem responsiva */
+    flex-shrink: 0;
 }
 
 /* Classe para esconder/mostrar elementos */
@@ -122,103 +125,102 @@ h1 {
     transform: scale(0.98);
 }
 
-/* --- Estilos do Jogo --- */
+/* --- Estilos do Jogo (Responsivo) --- */
 
 .game-container {
     display: flex;
-    gap: 30px;
+    gap: 2vh; /* Espaço responsivo */
     background-color: var(--primary-color);
-    padding: 20px;
+    padding: 1.5vh; /* Preenchimento responsivo */
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border: 2px solid var(--border-color);
+    /* Garante que o container não ultrapasse a altura */
+    max-height: 85vh; 
 }
 
 canvas {
     background-color: #000;
     border: 2px solid var(--border-color);
     border-radius: 8px;
+    /* --- MUDANÇA PRINCIPAL --- */
+    height: 75vh; /* 75% da altura da tela */
+    width: 37.5vh; /* Metade da altura (para manter proporção 10x20) */
+    /* Garante que não ultrapasse o container */
+    max-height: 100%; 
+    max-width: 100%;
 }
 
 .ui-panel {
-    width: 200px;
+    width: 25vh; /* Largura responsiva */
     text-align: left;
+    display: flex;
+    flex-direction: column;
+    /* Evita que o painel transborde */
+    overflow: hidden; 
 }
 
+/* === FONTES RESPONSIVAS === */
 .ui-panel h2 {
     color: var(--accent-color);
     border-bottom: 2px solid var(--border-color);
-    padding-bottom: 5px;
+    padding-bottom: 0.5vh;
+    font-size: 2.5vh; /* Fonte responsiva */
+    margin: 0.5vh 0;
 }
 
 #score {
-    font-size: 2.5rem;
+    font-size: 4vh; /* Fonte responsiva */
     font-weight: 600;
     color: #fff;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 1vh;
 }
 
 #timer {
-    font-size: 2rem;
+    font-size: 3vh; /* Fonte responsiva */
     font-weight: 400;
     color: #fff;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 1vh;
 }
 
-/* Estilos para os novos elementos da UI */
 #gamePlayerName {
-    font-size: 1.5rem; /* Tamanho médio */
+    font-size: 2.5vh; /* Fonte responsiva */
     font-weight: 400;
-    color: var(--accent-color); /* Cor de destaque */
-    margin-top: -5px; /* Mais perto do título "Jogador" */
-    margin-bottom: 15px;
+    color: var(--accent-color);
+    margin-top: -0.5vh;
+    margin-bottom: 1vh;
 }
 
 #gameHighScore {
-    font-size: 2.5rem; /* Igual ao #score */
+    font-size: 4vh; /* Fonte responsiva */
     font-weight: 600;
     color: #fff;
     margin-top: 0;
-    margin-bottom: 5px; /* Menos espaço para o nome */
+    margin-bottom: 0.5vh;
 }
 
 #gameHighScoreName {
-    font-size: 1.2rem; /* Um pouco menor */
+    font-size: 2vh; /* Fonte responsiva */
     font-weight: 300;
     color: #ccc;
     margin-top: 0;
-    margin-bottom: 15px;
+    margin-bottom: 1vh;
 }
 
-
-.controls {
-    margin-top: 30px;
-    font-size: 0.9rem;
-    color: #aaa;
-}
-
-.controls h3 {
-    color: #fff;
-    margin-bottom: 10px;
-}
-
-.controls p {
-    margin: 5px 0;
-}
-
-/* Estilo do Botão de Pausa */
+/* === BOTÃO E CONTROLES RESPONSIVOS === */
 #pauseButton {
-    background-color: #ffc107; /* Cor de "aviso" */
+    background-color: #ffc107;
     color: var(--bg-color);
     border: none;
-    padding: 12px 20px;
-    font-size: 1rem;
+    font-size: 2vh; /* Fonte responsiva */
     font-weight: 600;
     border-radius: 8px;
     cursor: pointer;
     width: 100%;
-    margin-top: 20px;
+    margin-top: 1vh;
+    padding: 1.5vh 2vh; /* Preenchimento responsivo */
     transition: background-color 0.3s ease;
 }
 
@@ -232,9 +234,24 @@ canvas {
     cursor: not-allowed;
 }
 
-/* --- Estilos dos Modais --- */
+.controls {
+    margin-top: auto; /* Empurra para o final */
+    font-size: 1.5vh; /* Fonte responsiva */
+    color: #aaa;
+    /* Garante que o texto não quebre de forma estranha */
+    white-space: nowrap; 
+}
 
-/* Estilos do Modal de Instruções (e base do Pause) */
+.controls h3 {
+    color: #fff;
+    margin-bottom: 0.5vh;
+}
+
+.controls p {
+    margin: 0.25vh 0;
+}
+
+/* --- Estilos dos Modais (mantidos como estavam) --- */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -258,6 +275,10 @@ canvas {
     max-width: 500px;
     text-align: left;
 }
+/* ... (o resto do seu CSS de modais, créditos, matrix, etc. continua igual) ... */
+
+/* Cole o resto do seu CSS original daqui para baixo */
+/* (Modal-content h2, ul, li, etc.) */
 
 .modal-content h2 {
     color: var(--accent-color);
@@ -281,7 +302,7 @@ canvas {
     color: var(--accent-color);
     margin-right: 10px;
     display: inline-block;
-    width: 130px; /* Alinha os controles */
+    width: 130px;
 }
 
 .modal-content p {
@@ -309,7 +330,6 @@ canvas {
     background-color: #00c4dd;
 }
 
-/* Estilo Específico do Botão de Continuar (no overlay de pausa) */
 #pauseOverlay .modal-content {
     text-align: center;
     max-width: 300px;
@@ -333,7 +353,6 @@ canvas {
     background-color: #00c4dd;
 }
 
-/* NOVO: Estilos dos Créditos */
 .credits {
     margin-top: 25px;
     text-align: center;
@@ -346,17 +365,18 @@ canvas {
 }
 
 .credits ul {
-    list-style: none;
+    list-style: none; 
     padding: 0;
     margin: 0;
-    display: flex; /* Coloca os nomes lado a lado */
+    display: flex; 
     justify-content: center;
     gap: 15px;
+    flex-wrap: wrap; 
 }
 
 .credits li {
-    font-size: 1rem; /* Reseta o tamanho da fonte do modal */
-    margin-bottom: 0; /* Reseta a margem do modal */
+    font-size: 1rem;
+    margin-bottom: 0;
 }
 
 .credits a {
@@ -371,43 +391,39 @@ canvas {
     text-decoration: underline;
 }
 
-/* Ajuste para o modal de pausa, que é menor */
 #pauseOverlay .credits {
     margin-top: 20px;
 }
 #pauseOverlay .credits ul {
-    flex-direction: column; /* Nomes um embaixo do outro no modal pequeno */
+    flex-direction: column; 
     gap: 5px;
 }
 
-/* Ajuste para a tela inicial (centralizar) */
 #startScreen .credits {
     position: absolute;
     bottom: 20px;
+    left: 0;
+    right: 0;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
 }
-
-/* --- ESTILOS DA NOVA TELA DE FIM DE JOGO --- */
 
 #gameOverOverlay .modal-content {
     max-width: 400px;
     text-align: center;
 }
-
 #gameOverTitle {
     font-size: 2.2rem;
     margin-bottom: 25px;
 }
-
-/* Título especial para NOVO RECORDE */
 #gameOverTitle.new-record {
-    color: #FFD600; /* Dourado/Amarelo */
+    color: #FFD600;
 }
-
 .game-over-stats {
     text-align: left;
     margin-bottom: 30px;
 }
-
 .game-over-stats h3 {
     color: var(--accent-color);
     font-size: 1rem;
@@ -416,27 +432,21 @@ canvas {
     text-transform: uppercase;
     letter-spacing: 1px;
 }
-
 .game-over-stats p {
     color: #fff;
     font-size: 1.8rem;
     font-weight: 600;
     margin: 5px 0 0 0;
 }
-
 .game-over-stats hr {
     border: 0;
     border-top: 1px solid var(--border-color);
     margin: 20px 0;
 }
-
-/* Estilo para a pontuação final (para diferenciar do recorde) */
 #gameOverScore {
     font-size: 2.5rem;
     color: #fff;
 }
-
-
 #gameOverButton {
     background-color: var(--accent-color);
     color: var(--bg-color);
@@ -450,7 +460,6 @@ canvas {
     margin-top: 10px;
     transition: background-color 0.3s ease;
 }
-
 #gameOverButton:hover {
     background-color: #00c4dd;
 }
@@ -458,7 +467,7 @@ canvas {
     background-color: var(--primary-color);
     color: var(--accent-color);
     border: 2px solid var(--border-color);
-    padding: 13px 30px; /* Alinha com o botão principal */
+    padding: 13px 30px;
     font-size: 1.2rem;
     font-weight: 600;
     border-radius: 8px;
@@ -466,33 +475,27 @@ canvas {
     width: 300px;
     max-width: 90%;
     transition: background-color 0.3s ease, border-color 0.3s ease;
-    margin-top: 15px; /* Espaço abaixo do botão Iniciar */
+    margin-top: 15px;
 }
-
 .button-secondary:hover {
     background-color: var(--bg-color);
     border-color: var(--accent-color);
 }
 
-/* Modal de Configurações */
 #settingsModal .modal-content {
     max-width: 400px;
     text-align: center;
 }
-
 .setting-item {
     margin: 25px 0;
     text-align: left;
 }
-
 .setting-item label {
     display: block;
     margin-bottom: 10px;
     font-size: 1.1rem;
     color: var(--text-color);
 }
-
-/* Estilo do Slider de Volume */
 #volumeSlider {
     -webkit-appearance: none;
     appearance: none;
@@ -504,7 +507,6 @@ canvas {
     outline: none;
     transition: background 0.2s ease;
 }
-
 #volumeSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
@@ -514,7 +516,6 @@ canvas {
     border-radius: 50%;
     cursor: pointer;
 }
-
 #volumeSlider::-moz-range-thumb {
     width: 20px;
     height: 20px;
@@ -522,8 +523,6 @@ canvas {
     border-radius: 50%;
     cursor: pointer;
 }
-
-/* Botão de Mudo */
 #muteButton, #closeSettingsButton {
     background-color: var(--accent-color);
     color: var(--bg-color);
@@ -537,40 +536,29 @@ canvas {
     margin-top: 10px;
     transition: background-color 0.3s ease;
 }
-
 #muteButton:hover, #closeSettingsButton:hover {
     background-color: #00c4dd;
 }
-
-/* Estilo quando está mudo */
 #muteButton.muted {
-    background-color: #ffc107; /* Amarelo */
+    background-color: #ffc107;
 }
-/* ===================== MODO MATRIX ===================== */
 
-/* Ativa o modo Matrix no body */
 body.matrix-mode {
     background-color: #000 !important;
     color: #00ff99 !important;
     text-shadow: 0 0 8px #00ff99;
     transition: background-color 1s ease, color 1s ease;
 }
-
-/* Canvas com efeito neon verde */
 body.matrix-mode canvas {
     border-color: #00ff99;
     box-shadow: 0 0 20px #00ff99aa;
     transition: box-shadow 0.5s ease;
 }
-
-/* Painel com tom mais escuro e linhas verdes */
 body.matrix-mode .game-container {
     background-color: rgba(0, 10, 0, 0.9);
     box-shadow: 0 0 25px #00ff9966;
     border: 1px solid #00ff9966;
 }
-
-/* Textos e títulos ganham brilho */
 body.matrix-mode h1,
 body.matrix-mode h2,
 body.matrix-mode h3,
@@ -580,32 +568,59 @@ body.matrix-mode #timer {
     text-shadow: 0 0 10px #00ff99, 0 0 20px #00ff55;
     animation: matrixGlow 2s infinite alternate;
 }
-
-/* Efeito de piscada suave */
 @keyframes matrixGlow {
     from { opacity: 1; text-shadow: 0 0 6px #00ff99; }
     to { opacity: 0.8; text-shadow: 0 0 20px #00ff99; }
 }
-
-/* Fundo pulsante sutil */
 @keyframes matrixPulse {
     0% { background-color: #000; }
     50% { background-color: #001a00; }
     100% { background-color: #000; }
 }
-
 body.matrix-mode {
     animation: matrixPulse 6s infinite ease-in-out;
 }
-
-/* Botões no modo Matrix */
 body.matrix-mode button {
     background-color: #00ff99 !important;
     color: #000 !important;
     border: none;
     text-shadow: none;
 }
-
 body.matrix-mode button:hover {
     background-color: #00cc77 !important;
+}
+
+.game-container.pulse-down {
+    animation: pulseDown 0.3s ease-out; 
+}
+@keyframes pulseDown {
+    0% {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        border-color: var(--border-color);
+    }
+    50% {
+        box-shadow: 0 10px 40px rgba(0, 229, 255, 0.5), 0 0 20px rgba(0, 229, 255, 0.3);
+        border-color: var(--accent-color);
+    }
+    100% {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        border-color: var(--border-color);
+    }
+}
+body.matrix-mode .game-container.pulse-down {
+     animation: pulseDownMatrix 0.3s ease-out;
+}
+@keyframes pulseDownMatrix {
+    0% {
+        box-shadow: 0 0 25px #00ff9966;
+        border-color: #00ff9966;
+    }
+    50% {
+        box-shadow: 0 0 45px #00ff99, 0 0 30px #ffffffaa;
+        border-color: #00ff99;
+    }
+    100% {
+        box-shadow: 0 0 25px #00ff9966;
+        border-color: #00ff9966;
+    }
 }
