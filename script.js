@@ -3,6 +3,7 @@ const context = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
 const timerElement = document.getElementById('timer');
 const gameArea = document.querySelector('.game-area');
+const gameContainer = document.querySelector('.game-container'); 
 const gamePlayerNameElement = document.getElementById('gamePlayerName');
 const gameHighScoreNameElement = document.getElementById('gameHighScoreName');
 const gameHighScoreElement = document.getElementById('gameHighScore');
@@ -38,9 +39,10 @@ const VOLUME_KEY = 'stackDownVolume';
 const MUTE_KEY = 'stackDownMuted';
 const COLS = 10;
 const ROWS = 20;
-const BLOCK_SIZE = 30;
 
-// ==================== NOVO: VARIÁVEL DO MODO MATRIX ====================
+// BLOCK_SIZE será definido dentro de startGame()
+let BLOCK_SIZE; 
+
 let isMatrixMode = false;
 
 // Cores
@@ -304,6 +306,7 @@ function drawPiece(piece) {
 }
 
 function drawBlock(x, y, colorIndex) {
+    // BLOCK_SIZE é calculado em startGame(), por isso as funções de desenho funcionam
     if (isMatrixMode) {
         const chars = '01abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         const char = chars[Math.floor(Math.random() * chars.length)];
@@ -316,6 +319,16 @@ function drawBlock(x, y, colorIndex) {
         context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
         context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
     }
+}
+
+// ==================== EFEITO DE PULSO (EASTER EGG) ====================
+
+function triggerDropEffect() {
+    if (!gameContainer) return; 
+    gameContainer.classList.add('pulse-down');
+    setTimeout(() => {
+        gameContainer.classList.remove('pulse-down');
+    }, 300);
 }
 
 // ==================== LOOP E CONTROLES ====================
@@ -345,13 +358,32 @@ function updateTimer() {
 // ==================== INÍCIO DO JOGO ====================
 
 function startGame() {
+    // === MUDANÇA PRINCIPAL (CORRIGIDA) ===
+    // O CSS define a altura do canvas como 75vh.
+    // Vamos calcular o valor em pixels baseado na altura da janela (window.innerHeight).
+    const vh = window.innerHeight / 100;
+    const canvasHeight = 75 * vh; // 75vh
+
+    // BLOCK_SIZE é definido aqui (sem let ou const para ser global)
+    BLOCK_SIZE = canvasHeight / ROWS; 
+
+    // Agora definimos o tamanho exato do canvas em pixels
+    canvas.width = BLOCK_SIZE * COLS;
+    canvas.height = canvasHeight; 
+    // =========================
+
     currentPlayerName = startScreenNameInput.value.trim() || 'Anônimo';
     localStorage.setItem(LAST_PLAYER_NAME_KEY, currentPlayerName);
     gamePlayerNameElement.textContent = currentPlayerName;
 
-    // --- DETECTA GATILHO DO MODO MATRIX ---
     const lower = currentPlayerName.toLowerCase();
     isMatrixMode = ['matrix', 'neo', 'hacker'].includes(lower);
+
+    if (isMatrixMode) {
+        document.body.classList.add('matrix-mode');
+    } else {
+        document.body.classList.remove('matrix-mode');
+    }
 
     startScreen.classList.add('hidden');
     gameArea.classList.remove('hidden');
@@ -413,7 +445,11 @@ document.addEventListener('keydown', (e) => {
     switch (e.key) {
         case 'ArrowLeft': movePiece(-1, 0); break;
         case 'ArrowRight': movePiece(1, 0); break;
-        case 'ArrowDown': drop(); dropCounter = 0; break;
+        case 'ArrowDown':
+            drop();
+            dropCounter = 0;
+            triggerDropEffect(); 
+            break;
         case 'ArrowUp': rotatePiece(); break;
         case ' ':
             e.preventDefault();
@@ -421,6 +457,7 @@ document.addEventListener('keydown', (e) => {
             lockPiece();
             clearLines();
             spawnNewPiece();
+            triggerDropEffect(); 
             break;
     }
     draw();
@@ -432,10 +469,40 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+// ==================== NOVO: GATILHO DO MODO MATRIX POR TECLA ====================
+document.addEventListener('keydown', (e) => {
+    // Impede a ativação se estiver digitando o nome no input
+    if (e.target === startScreenNameInput) {
+        return;
+    }
+
+    const key = e.key.toLowerCase();
+
+    // Verifica as teclas N, H, ou Shift
+    if (key === 'n' || key === 'h' || e.key === 'Shift') {
+        // Inverte o estado atual do Modo Matrix
+        isMatrixMode = !isMatrixMode;
+
+        // Aplica ou remove a classe CSS do body
+        if (isMatrixMode) {
+            document.body.classList.add('matrix-mode');
+        } else {
+            document.body.classList.remove('matrix-mode');
+        }
+
+        // Se o jogo estiver rodando (não pausado, nem game over),
+        // força um redesenho imediato para aplicar o efeito.
+        if (!gameArea.classList.contains('hidden') && !isGameOver && !isPaused) {
+            draw();
+        }
+    }
+});
+
 // ==================== MODAIS E BOTÕES ====================
 
 function closeModal() {
     instructionsModal.classList.add('hidden');
+    startScreen.classList.remove('hidden'); 
 }
 
 closeModalButton.addEventListener('click', closeModal);
@@ -448,6 +515,7 @@ gameOverButton.addEventListener('click', () => {
     gameOverOverlay.classList.add('hidden');
     startScreen.classList.remove('hidden');
     loadHighScore();
+    document.body.classList.remove('matrix-mode'); 
 });
 
 pauseButton.addEventListener('click', () => {
