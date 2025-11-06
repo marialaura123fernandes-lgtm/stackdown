@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('gameCanvas');
 const context = canvas.getContext('2d');
 const scoreElement = document.getElementById('score');
@@ -31,15 +30,18 @@ const settingsModal = document.getElementById('settingsModal');
 const closeSettingsButton = document.getElementById('closeSettingsButton');
 const volumeSlider = document.getElementById('volumeSlider');
 const muteButton = document.getElementById('muteButton');
+
 const HIGH_SCORE_KEY = 'meuTetrisHighScore';
 const HIGH_SCORE_NAME_KEY = 'meuTetrisHighScoreName';
 const LAST_PLAYER_NAME_KEY = 'meuTetrisLastPlayer';
-// --- CHAVES DE CONFIGURAÇÕES ADICIONADAS ---
 const VOLUME_KEY = 'stackDownVolume';
 const MUTE_KEY = 'stackDownMuted';
 const COLS = 10;
 const ROWS = 20;
 const BLOCK_SIZE = 30;
+
+// ==================== NOVO: VARIÁVEL DO MODO MATRIX ====================
+let isMatrixMode = false;
 
 // Cores
 const COLORS = [null, '#FF007F', '#00E5FF', '#FFD600', '#AD00FF', '#00FF9E', '#FF5733', '#FFFFFF'];
@@ -56,38 +58,32 @@ let dropCounter;
 let dropInterval;
 let gameTimerInterval;
 let startTime;
-let lastTime = 0; // Movido para escopo global para o gameLoop
+let lastTime = 0;
 
 // Variáveis de Pausa
 let isPaused = false;
-let animationFrameId; // Guarda o ID do requestAnimationFrame
+let animationFrameId;
 
-// Variáveis de Recorde e Jogador
+// Recorde e Jogador
 let currentHighScore = 0;
 let currentHighScoreName = 'Ninguém';
 let currentPlayerName = '';
 
-// --- Funções Principais do Jogo ---
-// --- FUNÇÕES DE ÁUDIO E CONFIGURAÇÕES ADICIONADAS ---
+// ==================== CONFIGURAÇÕES DE ÁUDIO ====================
 
-/** Carrega as configurações de áudio do localStorage */
 function loadSettings() {
     const savedVolume = localStorage.getItem(VOLUME_KEY);
     const savedMuted = localStorage.getItem(MUTE_KEY);
 
-    // Carrega o volume salvo ou usa o padrão
     if (savedVolume !== null) {
         backgroundMusic.volume = savedVolume;
         volumeSlider.value = savedVolume;
     } else {
-        backgroundMusic.volume = 0.3; // Padrão (você já tinha isso, mas agora está aqui)
+        backgroundMusic.volume = 0.3;
         volumeSlider.value = 0.3;
     }
-    
-    // Atualiza o volume no seu elemento de áudio (caso o padrão seja usado)
     backgroundMusic.volume = volumeSlider.value;
 
-    // Carrega o estado mudo salvo
     if (savedMuted === 'true') {
         backgroundMusic.muted = true;
         muteButton.textContent = 'Ligar Som';
@@ -99,24 +95,20 @@ function loadSettings() {
     }
 }
 
-/** Salva as configurações de áudio no localStorage */
 function saveSettings() {
     localStorage.setItem(VOLUME_KEY, backgroundMusic.volume);
     localStorage.setItem(MUTE_KEY, backgroundMusic.muted);
 }
 
-/** Atualiza o volume quando o slider é movido */
 function handleVolumeChange() {
     backgroundMusic.volume = volumeSlider.value;
-    // Se o usuário mexer no volume, assume que ele quer ouvir
     if (backgroundMusic.volume > 0) {
-        backgroundMusic.muted = false; 
+        backgroundMusic.muted = false;
         muteButton.textContent = 'Desligar Som';
         muteButton.classList.remove('muted');
     }
 }
 
-/** Liga ou desliga o som */
 function toggleMute() {
     backgroundMusic.muted = !backgroundMusic.muted;
     if (backgroundMusic.muted) {
@@ -127,7 +119,9 @@ function toggleMute() {
         muteButton.classList.remove('muted');
     }
 }
-/** Carrega o recorde salvo no localStorage e atualiza a tela inicial */
+
+// ==================== RECORDES E GRID ====================
+
 function loadHighScore() {
     currentHighScore = parseInt(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
     currentHighScoreName = localStorage.getItem(HIGH_SCORE_NAME_KEY) || 'Ninguém';
@@ -137,12 +131,11 @@ function loadHighScore() {
     startScreenNameInput.value = lastPlayerName;
 }
 
-/** Verifica e salva o novo recorde (chamado no Fim de Jogo) */
 function checkAndSaveHighScore() {
     const playerName = currentPlayerName;
     let newRecord = false;
     backgroundMusic.pause();
-    // 1. Verifica se a pontuação atual é maior que o recorde salvo
+
     if (score > currentHighScore) {
         currentHighScore = score;
         currentHighScoreName = playerName;
@@ -150,47 +143,37 @@ function checkAndSaveHighScore() {
         localStorage.setItem(HIGH_SCORE_NAME_KEY, currentHighScoreName);
         newRecord = true;
     }
-    
-    // 2. Preenche o modal de Fim de Jogo com os dados
-    
-    // Mostra o nome do jogador e sua pontuação
+
     gameOverPlayerName.textContent = playerName;
     gameOverScore.textContent = score;
-    
-    // Mostra o recorde atual (que pode ter acabado de ser atualizado)
     gameOverHighScoreName.textContent = currentHighScoreName;
     gameOverHighScore.textContent = currentHighScore;
-    
-    // Muda o título se for um novo recorde
+
     if (newRecord) {
         gameOverTitle.textContent = "Novo Recorde!";
-        gameOverTitle.classList.add('new-record'); // Adiciona classe para o CSS (cor dourada)
+        gameOverTitle.classList.add('new-record');
     } else {
         gameOverTitle.textContent = "Fim de Jogo!";
-        gameOverTitle.classList.remove('new-record'); // Garante que a classe não esteja lá
+        gameOverTitle.classList.remove('new-record');
     }
 
-    // 3. Esconde a área de jogo e mostra o modal de Fim de Jogo
     gameArea.classList.add('hidden');
     pauseButton.disabled = true;
     pauseButton.textContent = 'Pausar';
-    
-    gameOverOverlay.classList.remove('hidden'); // MOSTRA O MODAL DE GAME OVER
-
-    // 4. A função loadHighScore() agora será chamada quando o modal for fechado
+    gameOverOverlay.classList.remove('hidden');
 }
 
-/** Cria um grid (matriz) vazio */
 function createGrid() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(0));
 }
 
-/** Gera uma nova peça aleatória */
+// ==================== MECÂNICA DO JOGO ====================
+
 function spawnNewPiece() {
     const randomName = PIECE_NAMES[Math.floor(Math.random() * PIECE_NAMES.length)];
     const definition = SHAPES[randomName];
     const shape = definition.rotations[0];
-    
+
     currentPiece = {
         name: randomName,
         definition: definition,
@@ -200,16 +183,14 @@ function spawnNewPiece() {
         y: 0
     };
 
-    // Verifica se o jogo acabou
     if (checkCollision(currentPiece.x, currentPiece.y, currentPiece.shape)) {
         isGameOver = true;
-        cancelAnimationFrame(animationFrameId); // Para o loop do jogo
+        cancelAnimationFrame(animationFrameId);
         clearInterval(gameTimerInterval);
-        checkAndSaveHighScore(); 
+        checkAndSaveHighScore();
     }
 }
 
-/** Verifica colisão da peça com as bordas ou outras peças */
 function checkCollision(x, y, shape) {
     for (let row = 0; row < shape.length; row++) {
         for (let col = 0; col < shape[row].length; col++) {
@@ -225,7 +206,6 @@ function checkCollision(x, y, shape) {
     return false;
 }
 
-/** "Trava" a peça no lugar no grid */
 function lockPiece() {
     const { x, y, shape } = currentPiece;
     for (let row = 0; row < shape.length; row++) {
@@ -237,7 +217,6 @@ function lockPiece() {
     }
 }
 
-/** Verifica e limpa linhas completas */
 function clearLines() {
     let linesCleared = 0;
     for (let row = ROWS - 1; row >= 0; row--) {
@@ -254,7 +233,6 @@ function clearLines() {
     }
 }
 
-/** Move a peça (se não houver colisão) */
 function movePiece(dx, dy) {
     if (!checkCollision(currentPiece.x + dx, currentPiece.y + dy, currentPiece.shape)) {
         currentPiece.x += dx;
@@ -264,7 +242,6 @@ function movePiece(dx, dy) {
     return false;
 }
 
-/** Gira a peça */
 function rotatePiece() {
     const { definition } = currentPiece;
     let nextRotationIndex = (currentPiece.rotationIndex + 1) % definition.rotations.length;
@@ -283,7 +260,6 @@ function rotatePiece() {
     }
 }
 
-/** Faz a peça cair */
 function drop() {
     if (!movePiece(0, 1)) {
         lockPiece();
@@ -292,13 +268,20 @@ function drop() {
     }
 }
 
-// --- Funções de Desenho ---
+// ==================== DESENHO ====================
+
 function draw() {
-    context.fillStyle = '#000';
-    context.fillRect(0, 0, canvas.width, canvas.height);
+    if (isMatrixMode) {
+        context.fillStyle = 'rgba(0, 0, 0, 0.1)';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+        context.fillStyle = '#000';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+    }
     drawGrid();
-    if (currentPiece) { drawPiece(currentPiece); }
+    if (currentPiece) drawPiece(currentPiece);
 }
+
 function drawGrid() {
     for (let row = 0; row < ROWS; row++) {
         for (let col = 0; col < COLS; col++) {
@@ -308,6 +291,7 @@ function drawGrid() {
         }
     }
 }
+
 function drawPiece(piece) {
     const { x, y, shape } = piece;
     for (let row = 0; row < shape.length; row++) {
@@ -318,125 +302,114 @@ function drawPiece(piece) {
         }
     }
 }
-function drawBlock(x, y, colorIndex) {
-    context.fillStyle = COLORS[colorIndex];
-    context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-    context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
-    context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
-}
-// --- Fim Funções de Desenho ---
 
-// --- Loop Principal e Controles ---
+function drawBlock(x, y, colorIndex) {
+    if (isMatrixMode) {
+        const chars = '01abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const char = chars[Math.floor(Math.random() * chars.length)];
+        context.fillStyle = '#00FF00';
+        context.font = `${BLOCK_SIZE}px monospace`;
+        context.fillText(char, x * BLOCK_SIZE + 4, (y + 1) * BLOCK_SIZE - 4);
+    } else {
+        context.fillStyle = COLORS[colorIndex];
+        context.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        context.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        context.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+}
+
+// ==================== LOOP E CONTROLES ====================
 
 function gameLoop(timestamp = 0) {
-    if (isGameOver) { return; }
-
+    if (isGameOver) return;
     const deltaTime = timestamp - lastTime;
     lastTime = timestamp;
-
     dropCounter += deltaTime;
     if (dropCounter > dropInterval) {
         drop();
         dropCounter = 0;
     }
     draw();
-    animationFrameId = requestAnimationFrame(gameLoop); // Guarda o ID
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
-/** Função para atualizar o cronômetro */
 function updateTimer() {
-    if (isGameOver || isPaused) return; // Não atualiza se pausado
+    if (isGameOver || isPaused) return;
     const elapsedTime = Date.now() - startTime;
     const totalSeconds = Math.floor(elapsedTime / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    timerElement.textContent = 
-        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    timerElement.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
-/** Inicia/Reinicia o jogo */
-function startGame() {
-    // 1. Pegar e salvar o nome do jogador
-    currentPlayerName = startScreenNameInput.value.trim() || 'Anônimo';
-    localStorage.setItem(LAST_PLAYER_NAME_KEY, currentPlayerName); 
+// ==================== INÍCIO DO JOGO ====================
 
-    // Atualiza o nome do jogador na UI
+function startGame() {
+    currentPlayerName = startScreenNameInput.value.trim() || 'Anônimo';
+    localStorage.setItem(LAST_PLAYER_NAME_KEY, currentPlayerName);
     gamePlayerNameElement.textContent = currentPlayerName;
 
-    // 2. Esconder a tela inicial e mostrar o jogo
+    // --- DETECTA GATILHO DO MODO MATRIX ---
+    const lower = currentPlayerName.toLowerCase();
+    isMatrixMode = ['matrix', 'neo', 'hacker'].includes(lower);
+
     startScreen.classList.add('hidden');
     gameArea.classList.remove('hidden');
 
-    // 3. Resetar o estado do jogo
     grid = createGrid();
     score = 0;
     scoreElement.textContent = score;
     isGameOver = false;
     dropCounter = 0;
     dropInterval = 1000;
-    
-    // Atualiza a exibição do recorde na tela de jogo
-    // (As variáveis currentHighScore e currentHighScoreName já foram carregadas no loadHighScore())
+
     gameHighScoreElement.textContent = currentHighScore;
     gameHighScoreNameElement.textContent = currentHighScoreName;
-    
-    // 4. Resetar estado de pausa
+
     isPaused = false;
     pauseOverlay.classList.add('hidden');
     pauseButton.disabled = false;
     pauseButton.textContent = 'Pausar';
-    
-    // 5. Iniciar o Timer
+
     timerElement.textContent = '00:00';
-    if (gameTimerInterval) { clearInterval(gameTimerInterval); }
+    if (gameTimerInterval) clearInterval(gameTimerInterval);
     startTime = Date.now();
     gameTimerInterval = setInterval(updateTimer, 1000);
-    
-    // 6. Iniciar o jogo
-    lastTime = performance.now(); // Zera o lastTime
+
+    lastTime = performance.now();
     spawnNewPiece();
     animationFrameId = requestAnimationFrame(gameLoop);
-    backgroundMusic.currentTime = 0; // Reinicia a música do início
+    backgroundMusic.currentTime = 0;
     backgroundMusic.play();
 }
 
-// --- Funções de Pausa ---
+// ==================== PAUSA ====================
+
 function pauseGame() {
     if (isGameOver || isPaused) return;
-    
     isPaused = true;
-    cancelAnimationFrame(animationFrameId); // Para o loop do jogo
-    clearInterval(gameTimerInterval); // Para o cronômetro
-    pauseOverlay.classList.remove('hidden'); // Mostra o menu de pausa
+    cancelAnimationFrame(animationFrameId);
+    clearInterval(gameTimerInterval);
+    pauseOverlay.classList.remove('hidden');
     pauseButton.textContent = 'Continuar';
     backgroundMusic.pause();
 }
 
 function resumeGame() {
     if (isGameOver || !isPaused) return;
-    
     isPaused = false;
-    pauseOverlay.classList.add('hidden'); // Esconde o menu
+    pauseOverlay.classList.add('hidden');
     pauseButton.textContent = 'Pausar';
-    
-    // Reinicia o cronômetro
-    gameTimerInterval = setInterval(updateTimer, 1000); 
-    
-    // Reinicia o loop do jogo
-    lastTime = performance.now(); // Reseta o 'lastTime' para evitar pulo
+    gameTimerInterval = setInterval(updateTimer, 1000);
+    lastTime = performance.now();
     animationFrameId = requestAnimationFrame(gameLoop);
     backgroundMusic.play();
 }
-// --- FIM Funções de Pausa ---
 
+// ==================== EVENTOS ====================
 
-// --- Event Listeners ---
-
-// Listener do jogo (controles das peças)
 document.addEventListener('keydown', (e) => {
-    // IGNORA se pausado, game over, ou sem peça
-    if (isGameOver || !currentPiece || isPaused) return; 
-    
+    if (isGameOver || !currentPiece || isPaused) return;
     switch (e.key) {
         case 'ArrowLeft': movePiece(-1, 0); break;
         case 'ArrowRight': movePiece(1, 0); break;
@@ -444,7 +417,7 @@ document.addEventListener('keydown', (e) => {
         case 'ArrowUp': rotatePiece(); break;
         case ' ':
             e.preventDefault();
-            while (movePiece(0, 1)) { /* hard drop */ }
+            while (movePiece(0, 1)) {}
             lockPiece();
             clearLines();
             spawnNewPiece();
@@ -453,77 +426,48 @@ document.addEventListener('keydown', (e) => {
     draw();
 });
 
-// Listener Global (para Pausa, 'P')
 document.addEventListener('keydown', (e) => {
-    // Não pode pausar se o jogo não começou (gameArea está hidden) ou se o modal de instruções está aberto
     if (e.key.toLowerCase() === 'p' && !gameArea.classList.contains('hidden') && instructionsModal.classList.contains('hidden')) {
-        if (isPaused) {
-            resumeGame();
-        } else {
-            pauseGame();
-        }
+        if (isPaused) resumeGame(); else pauseGame();
     }
 });
 
+// ==================== MODAIS E BOTÕES ====================
 
-// --- Inicialização da Página ---
-
-/** Função para fechar o modal de instruções */
 function closeModal() {
     instructionsModal.classList.add('hidden');
 }
 
-// Listeners dos Modais e Tela Inicial
 closeModalButton.addEventListener('click', closeModal);
 instructionsModal.addEventListener('click', (e) => {
-    if (e.target === instructionsModal) { closeModal(); }
+    if (e.target === instructionsModal) closeModal();
 });
+
 startScreenButton.addEventListener('click', startGame);
-startScreenNameInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { startGame(); }
-});
-
-// Listener para o botão da tela de Fim de Jogo
 gameOverButton.addEventListener('click', () => {
-    // 1. Esconde o modal de fim de jogo
     gameOverOverlay.classList.add('hidden');
-    
-    // 2. Recarrega os dados do recorde (para atualizar a tela inicial)
-    loadHighScore(); 
-    
-    // 3. Mostra a tela inicial
     startScreen.classList.remove('hidden');
+    loadHighScore();
 });
 
-// Listeners dos botões de pausa
 pauseButton.addEventListener('click', () => {
-    if (isPaused) {
-        resumeGame();
-    } else {
-        pauseGame();
-    }
+    if (isPaused) resumeGame(); else pauseGame();
 });
-resumeButton.addEventListener('click', resumeGame);
-// --- LISTENERS DE CONFIGURAÇÕES ADICIONADOS ---
 
-// Abre o modal de configurações
+resumeButton.addEventListener('click', resumeGame);
+
 settingsButton.addEventListener('click', () => {
     settingsModal.classList.remove('hidden');
 });
 
-// Fecha o modal de configurações e SALVA
 closeSettingsButton.addEventListener('click', () => {
-    saveSettings(); // Salva as mudanças
     settingsModal.classList.add('hidden');
+    saveSettings();
 });
 
-// Listener para o slider de volume
 volumeSlider.addEventListener('input', handleVolumeChange);
-
-// Listener para o botão de mudo
 muteButton.addEventListener('click', toggleMute);
-// Configuração inicial
-grid = createGrid();
-draw(); 
+
+// ==================== INICIALIZAÇÃO ====================
+loadSettings();
 loadHighScore();
-loadSettings(); // <-- ADICIONADO: Carrega as configurações de som salvas
